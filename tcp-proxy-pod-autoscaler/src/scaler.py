@@ -15,8 +15,12 @@ class Scaler(object):
     _endpoint_name = ""
     _check_ttl: int
     _replicas = None
+    _max_retry = 100
+    _timeout_ms = 500
+    _factor = 1  # timeout series: 0.5s, 1s
 
     def __init__(self, args):
+        _logger.debug("START")
 
         if "check_ttl" in args:
             self._check_ttl = args.check_ttl
@@ -30,30 +34,44 @@ class Scaler(object):
         if "endpoint" in args:
             self._endpoint_name = args.endpoint
 
+        if "max_retry" in args:
+            self._max_retry = args.max_retry
+
+        _logger.info(f"Watching namespace: {self._namespace}")
+        _logger.info(f"Watching deployment: {self._deployment_name}")
+        _logger.info(f"Watching endpoint: {self._endpoint_name}")
+        _logger.info(f"TTL: {self._check_ttl}")
+        _logger.info(f"Max retry: {self._max_retry}")
+
         self._k8s = KubernetesToolbox()
 
     def scale_down(self, _replica=0):
+        _logger.debug("START")
         self.update_scale_down()
         self._k8s.update_replica_number(
             self._namespace, self._deployment_name, _replica)
 
     def update_scale_down(self):
+        _logger.debug("START")
         return self._update_annotation_call(self._scale_down_at_annotation)
 
     def update_last_call(self):
+        _logger.debug("START")
         return self._update_annotation_call(self._last_call_at_annotation)
 
     def _update_annotation_call(self, _annotation):
+        _logger.debug("START")
         _now_UTC = datetime.now(timezone.utc)
         _updated_annotation = self._k8s.update_deployment_annotation(
             self._namespace, self._deployment_name, _annotation, _now_UTC.isoformat())
         return _updated_annotation
 
     def is_expired(self):
+        _logger.debug("START")
         _last_call_annotation = self._k8s.get_deployment_annotation(
             self._namespace, self._deployment_name, self._last_call_at_annotation)
-        _logger.debug(
-            f"is_expired::_last_call_annotation {_last_call_annotation}")
+        _logger.debug(f"_last_call_annotation {_last_call_annotation}")
+
         if _last_call_annotation is not None:
             _last_call_UTC = datetime.fromisoformat(_last_call_annotation)
 
@@ -65,11 +83,13 @@ class Scaler(object):
         return False
 
     def get_replica_number(self):
+        _logger.debug("START")
         self._replicas = self._k8s.get_replica_number(
             self._namespace, self._deployment_name)
         return self._replicas
 
     def make_target_available(self):
+        _logger.debug("START")
         self.get_replica_number()
 
         _logger.debug(f"get_replica_number: {self._replicas}")
@@ -78,11 +98,15 @@ class Scaler(object):
             self._k8s.update_replica_number(
                 self._namespace, self._deployment_name, 1)
             # wait endpoint is available
-            for i in range(1, 10):
+            __timeout_ms = self._timeout_ms
+            for i in range(1, self._max_retry):
                 _endpoint_status = self._k8s.check_endpoint_available(
                     self._namespace, self._endpoint_name)
                 if _endpoint_status:
                     return True
                 else:
-                    sleep(1)
+                    _timer = (__timeout_ms/1000)
+                    _logger.debug(f"wait {_timer}s before next retry")
+                    sleep(_timer)
+                    __timeout_ms = __timeout_ms * self._factor
             return False
