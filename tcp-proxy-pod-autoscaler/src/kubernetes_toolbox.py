@@ -107,9 +107,8 @@ class KubernetesToolbox(object):
                 name=_endpoint_name, namespace=_namespace)
 
             if hasattr(api_response, 'subsets'):
-                _logger.debug(f"have subset: {api_response.subsets}")
-                if hasattr(api_response.subsets, 'addresses'):
-                    _logger.debug(f"have addresses: {api_response.subsets.addresses}")
+                if hasattr(api_response.subsets[0], 'addresses'):
+                    _logger.debug(f"have addresses: {api_response.subsets[0].addresses}")
                     if len(api_response.subsets.addresses) > 0:
                         return True
             return False
