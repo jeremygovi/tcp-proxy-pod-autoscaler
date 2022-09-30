@@ -124,8 +124,9 @@ class Proxy(object):
                 return remote_sock
             except Exception as e:
                 counter += 1
-                _logger.exception(f"Sleep 200ms due to connect failure ({counter}/{max_attempts}): {e}")
+                _logger.warning(f"Sleep 200ms due to connect failure ({counter}/{max_attempts}): {e}")
                 time.sleep(200/1000)
+        _logger.exception(f"Max connect attempts reached. Cant do anything more")
         return False
 
     def store_sock(self, client, addr, rserver):
