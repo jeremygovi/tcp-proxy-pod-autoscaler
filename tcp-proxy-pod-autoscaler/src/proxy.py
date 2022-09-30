@@ -3,6 +3,7 @@ import socket
 import select
 import string
 import sys
+import time
 
 
 from logger_toolbox import _logger
@@ -88,8 +89,7 @@ class Proxy(object):
                             self.store_sock(client, addr, rserver)
                             break
                         else:
-                            _logger.error('the connection with the remote server can\'t be \
-                            established')
+                            _logger.error('the connection with the remote server cannot be established')
                             _logger.info(
                                 'Connection with {} is closed'.format(addr[0]))
                             client.close()
@@ -115,13 +115,18 @@ class Proxy(object):
 
     def remote_conn(self):
         _logger.debug("START")
-        try:
-            remote_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            remote_sock.connect((self.remote_address, int(self.remote_port)))
-            return remote_sock
-        except Exception as e:
-            _logger.exception(e)
-            return False
+        counter = 0
+        max_attempts = 100
+        while (counter < max_attempts):
+            try:
+                remote_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                remote_sock.connect((self.remote_address, int(self.remote_port)))
+                return remote_sock
+            except Exception as e:
+                counter += 1
+                _logger.exception(f"Sleep 200ms due to connect failure ({counter}/{max_attempts}): {e}")
+                time.sleep(200/1000)
+        return False
 
     def store_sock(self, client, addr, rserver):
         _logger.debug("START")
