@@ -108,10 +108,10 @@ class KubernetesToolbox(object):
 
             if hasattr(api_response, 'subsets'):
                 _logger.debug(f"have subsets")
-                if hasattr(api_response.subsets[0], 'addresses'):
-                    _logger.debug(f"have addresses: {api_response.subsets[0].addresses}")
-                    if len(api_response.subsets[0].addresses) > 0:
-                        _logger.debug(f"found at least 1 address")
+                if hasattr(api_response.subsets, 'addresses'):
+                    _logger.debug(f"have addresses: {api_response.subsets.addresses}")
+                    if len(api_response.subsets.addresses) > 0:
+                        _logger.debug(f"found at least 1 address: {api_response.subsets.addresses}")
                         return True
                     else:
                         _logger.debug(f"found 0 address")
