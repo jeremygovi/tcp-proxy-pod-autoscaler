@@ -114,7 +114,7 @@ class Scaler(object):
                     return True
                 else:
                     __timer = (__waiting_time_ms/1000)
-                    _logger.debug(f"Wait {__timer}s before next retry")
+                    _logger.debug(f"Wait {__timer}s before next retry (attempt {i}/{self._max_retry})")
                     sleep(__timer)
                     __waiting_time_ms = __waiting_time_ms * self._factor
             return False

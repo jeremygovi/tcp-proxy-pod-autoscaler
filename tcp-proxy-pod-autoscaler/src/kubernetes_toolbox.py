@@ -105,6 +105,7 @@ class KubernetesToolbox(object):
             api_instance = client.CoreV1Api(api_client)
             api_response = api_instance.read_namespaced_endpoints(
                 name=_endpoint_name, namespace=_namespace)
+            _logger.debug(f"api_response: {api_response}")
 
             if hasattr(api_response, 'subsets'):
                 if hasattr(api_response.subsets, 'addresses'):
