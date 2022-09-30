@@ -116,7 +116,7 @@ class Proxy(object):
     def remote_conn(self):
         _logger.debug("START")
         counter = 0
-        max_attempts = 100
+        max_attempts = 60
         while (counter < max_attempts):
             try:
                 remote_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -124,9 +124,9 @@ class Proxy(object):
                 return remote_sock
             except Exception as e:
                 counter += 1
-                _logger.warning(f"Sleep 200ms due to connect failure ({counter}/{max_attempts}): {e}")
-                time.sleep(200/1000)
-        _logger.exception(f"Max connect attempts reached. Cant do anything more")
+                _logger.debug(f"Sleep 1s due to connect failure ({counter}/{max_attempts}): {e}")
+                time.sleep(1)
+        _logger.exception(f"Max connect attempts reached ({max_attempts}).")
         return False
 
     def store_sock(self, client, addr, rserver):
